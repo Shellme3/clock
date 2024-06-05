@@ -1,0 +1,107 @@
+<canvas width="300" height="200" id="alarm"></canvas>
+<script>
+var ctx = document.getElementById("alarm").getContext("2d");
+ 
+//Создание таймера, вызывающего всю перерисовку
+var interval = setInterval(tick, 1000);
+ 
+//функция перерисовки КОНТЕКСТА
+//
+function tick() {
+  var radius = ctx.canvas.height / 2 - 5,
+    date = getSecondsObject(new Date),
+    radians = secondsObjectToRadians(date),
+    lines = radiansToRadialLines(radians, radius);
+ 
+  //Функция очистки КОНТЕКСТА
+  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+ 
+  drawBigCircle(radius);
+  draw12Points(radius);
+  drawArrows(lines);
+}
+ 
+function radiansToRadialLines(obj, radius) {
+  return [
+    { angle: obj.secondsAngle, width: 1, radius: radius * 0.9  },
+    { angle: obj.minutesAngle, width: 2, radius: radius * 0.75 },
+    { angle: obj.hoursAngle,   width: 3, radius: radius * 0.6  }
+  ];
+}
+ 
+function secondsObjectToRadians(obj) {
+  //Получаем значения углов стрелок в радианах
+  var normalize = function (value, min, max) { return (value - min) / (max - min); };
+  var normalizedToAngle = function (value) { return value * Math.PI * 2 - Math.PI / 2 };
+ 
+  return {
+    secondsAngle: normalizedToAngle(normalize(obj.seconds, 0, 60)),
+    minutesAngle: normalizedToAngle(normalize(obj.minutes, 0, 60 * 60)),
+    hoursAngle: normalizedToAngle(normalize(obj.hours, 0, 60 * 60 * 24))
+  };
+}
+ 
+//Перевод даты в секунды
+function getSecondsObject(date) {
+  var hours = date.getHours() * 60 * 60;
+  var minutes = date.getMinutes() * 60;
+  var seconds = date.getSeconds();
+ 
+  return {
+    seconds:  seconds ,
+    minutes:  minutes + seconds,
+    hours:  hours + minutes + seconds
+  };
+}
+ 
+function drawBigCircle(radius) {
+  //Обводится по контуру
+  stroke(function () {
+    ctx.lineWidth = 1;
+    //круг циферблата
+    ctx.arc(ctx.canvas.width / 2, ctx.canvas.height / 2, radius, 0, 2 * Math.PI);
+  });
+}
+ 
+function draw12Points(radius) {
+  //Рисует 12 кружков, соответствующих часам
+  for (var i = 0; i <= Math.PI * 2; i += 2 * Math.PI / 12) {
+    fill(function () {
+      ctx.fillStyle = "red";
+      ctx.arc(
+        ctx.canvas.width / 2 + radius * Math.cos(i),
+        ctx.canvas.height / 2 + radius * Math.sin(i),
+        3, 0, 2 * Math.PI);
+    });
+  }
+}
+ 
+function drawArrows(lines) {
+  function drawLine(angle, radius, width) {
+    stroke(function () {
+      var x0 = ctx.canvas.width / 2, y0 = ctx.canvas.height / 2;
+      ctx.lineWidth = width;
+      ctx.moveTo(x0, y0);
+      ctx.lineTo(x0 + radius * Math.cos(angle), y0 + radius * Math.sin(angle));
+    });
+  };
+  //Рисование стрелок часов
+  lines.forEach(function (line) {
+    drawLine(line.angle, line.radius, line.width);
+  });
+}
+ 
+function stroke(fn, params) {
+  ctx.beginPath();
+  fn(params);
+  ctx.stroke();
+  ctx.closePath();
+}
+ 
+function fill(fn, params) {
+  ctx.beginPath();
+  fn(params);
+  ctx.fill();
+  ctx.closePath();
+}
+</script>
